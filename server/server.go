@@ -18,20 +18,22 @@ type Info struct {
 	Attr        string
 	Addr        string
 	Price       string
-	Create_time time.Time
+	PublishTime time.Time
+	CreateTime  time.Time
 }
 
-var pageHTML = `<html>{{range .}} {{.Id}} <a href="{{.Url}}" target="_blank">链接</a> {{.Price}} —  {{.Title}}<br/> &nbsp;&nbsp;&nbsp;&nbsp;{{.Attr}} {{.Addr}} <hr/><p/> {{end}}</html>`
+var pageHTML = `<html>{{range .}} {{.Id}} <a href="{{.Url}}" target="_blank">链接</a> {{.Price}} —  {{.PublishTime}} <br/> &nbsp;&nbsp;&nbsp;&nbsp;{{.Title}} <br/> &nbsp;&nbsp;&nbsp;&nbsp;{{.Attr}} {{.Addr}} <hr/><p/> {{end}}</html>`
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	db, err := sql.Open("sqlite3", conf.DB_FILE)
 	defer db.Close()
 	checkErr(err)
-	rows, err := db.Query("select * from xm_fish order by id desc limit ?", conf.SHOW_COUNT)
+	rows, err := db.Query("select * from xm_fish order by publish_time desc limit ?", conf.SHOW_COUNT)
+	defer rows.Close()
 	list := make([]Info, 0, conf.SHOW_COUNT)
 	for rows.Next() {
 		info := new(Info)
-		err = rows.Scan(&info.Id, &info.Url, &info.Title, &info.Attr, &info.Addr, &info.Price, &info.Create_time)
+		err = rows.Scan(&info.Id, &info.Url, &info.Title, &info.Attr, &info.Addr, &info.Price, &info.PublishTime, &info.CreateTime)
 		list = append(list, *info)
 		checkErr(err)
 	}

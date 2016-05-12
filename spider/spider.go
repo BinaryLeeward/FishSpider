@@ -8,10 +8,11 @@ import (
 	"github.com/toqueteos/webbrowser"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 )
 
-var urls = []string{"http://fangzi.xmfish.com/web/search_hire.html?h=&hf=1&ca=59201&r=5920112&s=103&a=&rm=&f=&d=&tp=&l=0&tg=&hw=1&o=&ot=0&tst=0", "http://fangzi.xmfish.com/web/search_hire.html?h=&hf=1&ca=59201&r=5920113&s=103&a=&rm=&f=&d=&tp=&l=0&tg=&hw=1&o=&ot=1&tst=0", "http://fangzi.xmfish.com/web/search_hire.html?h=&hf=1&ca=59201&r=5920114&s=103&a=&rm=&f=&d=&tp=&l=0&tg=&hw=1&o=&ot=0&tst=0"}
+var urls = []string{"http://fangzi.xmfish.com/web/search_hire.html?h=&hf=1&ca=59201&r=5920114&s=103&a=&rm=&f=&d=&tp=&l=0&tg=&hw=1&o=&ot=0&tst=0", "http://fangzi.xmfish.com/web/search_hire.html?h=&hf=1&ca=59201&r=5920113&s=103&a=&rm=&f=&d=&tp=&l=0&tg=&hw=1&o=&ot=1&tst=0", "http://fangzi.xmfish.com/web/search_hire.html?h=&hf=1&ca=59201&r=5920112&s=103&a=&rm=&f=&d=&tp=&l=0&tg=&hw=1&o=&ot=0&tst=0"}
 var preURL = "http://fangzi.xmfish.com"
 var hasNewRecord = false
 
@@ -45,30 +46,32 @@ func parseURL(url string) {
 		attr := s.Find(".list-attr").Text()
 		addr := s.Find(".list-addr").Text()
 		price := s.Find(".list-price").Text()
-
-		insert(url, title, attr, addr, price)
+		publishTime := s.Find(".list-square").Next().Text()
+		publishTime = strings.Replace(publishTime, "最近更新：", "", 1)
+		insert(url, title, attr, addr, price, publishTime)
 	})
 }
 
 func createTable() {
 	db, err := sql.Open("sqlite3", conf.DB_FILE)
+	defer db.Close()
 	checkErr(err)
-	_, err = db.Exec("create table if not exists xm_fish (id integer primary key autoincrement, url varchar(256),title varchar(256),attr varchar(256),addr varchar(256),price varchar(256),create_time date null)")
+	_, err = db.Exec("create table if not exists xm_fish (id integer primary key autoincrement, url varchar(256),title varchar(256),attr varchar(256),addr varchar(256),price varchar(256),publish_time date,create_time date null)")
 	checkErr(err)
 }
 
-func insert(url, title, attr, addr, price string) {
+func insert(url, title, attr, addr, price, publishTime string) {
 	db, err := sql.Open("sqlite3", conf.DB_FILE)
 	defer db.Close()
 	checkErr(err)
 	rows, err := db.Query("select * from xm_fish where url = ?", url)
+	defer rows.Close()
 	checkErr(err)
 	if !rows.Next() {
-		stmt, err := db.Prepare("INSERT INTO xm_fish(url,title,attr,addr,price,create_time) values(?,?,?,?,?,?)")
+		stmt, err := db.Prepare("INSERT INTO xm_fish(url,title,attr,addr,price,publish_time,create_time) values(?,?,?,?,?,?,?)")
 		checkErr(err)
-		_, err = stmt.Exec(url, title, attr, addr, price, time.Now())
-		checkErr(err)
-		err = stmt.Close()
+		_, err = stmt.Exec(url, title, attr, addr, price, publishTime, time.Now())
+		defer stmt.Close()
 		checkErr(err)
 		hasNewRecord = true
 	}
