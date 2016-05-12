@@ -1,30 +1,49 @@
 package spider
 
 import (
+	"bufio"
 	"conf"
 	"database/sql"
 	"github.com/PuerkitoBio/goquery"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/toqueteos/webbrowser"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 )
 
-var urls = []string{"http://fangzi.xmfish.com/web/search_hire.html?h=&hf=1&ca=59201&r=5920114&s=103&a=&rm=&f=&d=&tp=&l=0&tg=&hw=1&o=&ot=0&tst=0", "http://fangzi.xmfish.com/web/search_hire.html?h=&hf=1&ca=59201&r=5920113&s=103&a=&rm=&f=&d=&tp=&l=0&tg=&hw=1&o=&ot=1&tst=0", "http://fangzi.xmfish.com/web/search_hire.html?h=&hf=1&ca=59201&r=5920112&s=103&a=&rm=&f=&d=&tp=&l=0&tg=&hw=1&o=&ot=0&tst=0"}
+var defaultUrls = []string{"http://fangzi.xmfish.com/web/search_hire.html?h=&hf=1&ca=59201&r=5920112&s=103&a=&rm=&f=&d=&tp=&l=0&tg=&hw=&o=&ot=1&tst=0", "http://fangzi.xmfish.com/web/search_hire.html?h=&hf=1&ca=59201&r=5920113&s=103&a=&rm=&f=&d=&tp=&l=0&tg=&hw=&o=&ot=0&tst=0", "http://fangzi.xmfish.com/web/search_hire.html?h=&hf=1&ca=59201&r=5920114&s=103&a=&rm=&f=&d=&tp=&l=0&tg=&hw=&o=&ot=1&tst=0"}
 var preURL = "http://fangzi.xmfish.com"
 var hasNewRecord = false
 
 func Catch() {
 	createTable()
+	urlFile, err := os.Open(conf.URL_FILE)
+	defer urlFile.Close()
+	urls := make([]string, 0, 10)
+	if err == nil {
+		scanner := bufio.NewScanner(urlFile)
+		for scanner.Scan() {
+			log.Println("read from file.........")
+			log.Println(scanner.Text()) // Println will add back the final '\n'
+			urls = append(urls, scanner.Text())
+		}
+	}
+	if len(urls) <= 0 {
+		urls = defaultUrls
+	}
+	log.Printf(".......url length %d.....\n", len(urls))
 	for {
 		hasNewRecord = false
-		log.Println(".......begin parse.....")
+		log.Println(".......begin parse.....\n")
+
 		for i := 0; i < len(urls); i++ {
+			log.Println(".....parse url....." + urls[i] + "\n")
 			parseURL(urls[i])
 		}
-		log.Println("........end  parse.....")
+		log.Println("........end  parse.....\n")
 		if hasNewRecord {
 			webbrowser.Open("http://localhost:" + strconv.Itoa(9999) + "/index.html")
 		}
@@ -35,9 +54,7 @@ func Catch() {
 func parseURL(url string) {
 
 	doc, err := goquery.NewDocument(url)
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkErr(err)
 
 	doc.Find(".list-word").Each(func(i int, s *goquery.Selection) {
 		href, _ := s.Find("h3 a").Attr("href")
@@ -79,6 +96,6 @@ func insert(url, title, attr, addr, price, publishTime string) {
 
 func checkErr(err error) {
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
 }

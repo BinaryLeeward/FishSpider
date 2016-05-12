@@ -4,7 +4,7 @@ import (
 	"conf"
 	"database/sql"
 	_ "github.com/mattn/go-sqlite3"
-	_ "log"
+	"log"
 	"net/http"
 	"strconv"
 	"text/template"
@@ -50,6 +50,6 @@ func Run() {
 
 func checkErr(err error) {
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
 }
