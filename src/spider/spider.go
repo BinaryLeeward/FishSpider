@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-var defaultUrls = []string{"http://fangzi.xmfish.com/web/search_hire.html?h=&hf=1&ca=59201&r=5920112&s=103&a=&rm=&f=&d=&tp=&l=0&tg=&hw=&o=&ot=1&tst=0", "http://fangzi.xmfish.com/web/search_hire.html?h=&hf=1&ca=59201&r=5920113&s=103&a=&rm=&f=&d=&tp=&l=0&tg=&hw=&o=&ot=0&tst=0", "http://fangzi.xmfish.com/web/search_hire.html?h=&hf=1&ca=59201&r=5920114&s=103&a=&rm=&f=&d=&tp=&l=0&tg=&hw=&o=&ot=1&tst=0"}
+var defaultUrls = []string{"http://fangzi.xmfish.com/web/search_hire.html"}
 var preURL = "http://fangzi.xmfish.com"
 var hasNewRecord = false
 
